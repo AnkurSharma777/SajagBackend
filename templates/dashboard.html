@@ -1,0 +1,223 @@
+
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - Disaster Alert System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <!-- Header -->
+        <div class="text-center mb-4">
+            <h1 class="display-4">
+                <i class="fas fa-broadcast-tower text-danger"></i>
+                Admin Dashboard
+            </h1>
+            <p class="lead">Send emergency disaster alerts to all registered devices</p>
+        </div>
+
+        <!-- Alert Form -->
+        <div class="card shadow">
+            <div class="card-header bg-danger text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-paper-plane"></i>
+                    Send New Alert
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('send_alert') }}" id="alertForm">
+                    <!-- Disaster Type -->
+                    <div class="mb-3">
+                        <label for="disaster_type" class="form-label">
+                            <strong>Disaster Type</strong>
+                        </label>
+                        <select class="form-select form-select-lg" id="disaster_type" name="disaster_type" required>
+                            <option value="">Select Disaster Type</option>
+                            <option value="flood">🌊 Flood</option>
+                            <option value="fire">🔥 Fire</option>
+                            <option value="earthquake">🏗️ Earthquake</option>
+                            <option value="hurricane">🌪️ Hurricane</option>
+                            <option value="tornado">🌀 Tornado</option>
+                            <option value="tsunami">🌊 Tsunami</option>
+                            <option value="landslide">⛰️ Landslide</option>
+                            <option value="volcanic">🌋 Volcanic Eruption</option>
+                            <option value="other">⚠️ Other Emergency</option>
+                        </select>
+                    </div>
+
+                    <!-- Message -->
+                    <div class="mb-3">
+                        <label for="message" class="form-label">
+                            <strong>Alert Message / Instructions</strong>
+                        </label>
+                        <textarea class="form-control" id="message" name="message" rows="4" 
+                                placeholder="Enter detailed emergency instructions and safety measures..." 
+                                required maxlength="500"></textarea>
+                        <div class="form-text">
+                            <span id="charCount">0</span>/500 characters
+                        </div>
+                    </div>
+
+                    <!-- Coordinates -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="latitude" class="form-label">
+                                <strong>Safe Shelter Latitude</strong>
+                            </label>
+                            <input type="number" class="form-control coordinates-input" 
+                                   id="latitude" name="latitude" 
+                                   placeholder="e.g., 40.7128" 
+                                   step="any" min="-90" max="90">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="longitude" class="form-label">
+                                <strong>Safe Shelter Longitude</strong>
+                            </label>
+                            <input type="number" class="form-control coordinates-input" 
+                                   id="longitude" name="longitude" 
+                                   placeholder="e.g., -74.0060" 
+                                   step="any" min="-180" max="180">
+                        </div>
+                    </div>
+
+                    <!-- Location Helper -->
+                    <div class="mb-3">
+                        <button type="button" class="btn btn-outline-info btn-sm" id="getCurrentLocation">
+                            <i class="fas fa-map-marker-alt"></i>
+                            Use Current Location
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm ms-2" id="clearLocation">
+                            <i class="fas fa-times"></i>
+                            Clear Location
+                        </button>
+                    </div>
+
+                    <!-- Send Button -->
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-danger btn-lg" id="sendBtn">
+                            <i class="fas fa-paper-plane"></i>
+                            Send Emergency Alert
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="row mt-4">
+            <div class="col-md-4">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-bell fa-2x text-warning mb-2"></i>
+                        <h5>Total Alerts</h5>
+                        <p class="text-muted">View all sent alerts</p>
+                        <a href="{{ url_for('alerts_history') }}" class="btn btn-outline-primary btn-sm">
+                            View History
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-users fa-2x text-success mb-2"></i>
+                        <h5>API Testing</h5>
+                        <p class="text-muted">Test with Postman</p>
+                        <button class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#apiModal">
+                            API Docs
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-cog fa-2x text-info mb-2"></i>
+                        <h5>System Status</h5>
+                        <p class="text-muted">Monitor system health</p>
+                        <span class="badge bg-success">Online</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- API Documentation Modal -->
+<div class="modal fade" id="apiModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">API Documentation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <h6>Send Alert Endpoint</h6>
+                <pre><code>POST /send_alert
+Content-Type: application/json
+
+{
+    "disaster_type": "flood",
+    "message": "Flash flood warning. Move to higher ground immediately.",
+    "latitude": 40.7128,
+    "longitude": -74.0060
+}</code></pre>
+
+                <h6 class="mt-4">Register FCM Token</h6>
+                <pre><code>POST /api/register_token
+Content-Type: application/json
+
+{
+    "token": "your-fcm-token-here",
+    "device_info": "Android 12, Chrome"
+}</code></pre>
+
+                <h6 class="mt-4">Base URL</h6>
+                <code>http://localhost:5000</code>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Character counter for message
+document.getElementById('message').addEventListener('input', function() {
+    const charCount = this.value.length;
+    document.getElementById('charCount').textContent = charCount;
+
+    if (charCount > 450) {
+        document.getElementById('charCount').style.color = '#dc3545';
+    } else {
+        document.getElementById('charCount').style.color = '#6c757d';
+    }
+});
+
+// Get current location
+document.getElementById('getCurrentLocation').addEventListener('click', function() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+            document.getElementById('latitude').value = position.coords.latitude.toFixed(6);
+            document.getElementById('longitude').value = position.coords.longitude.toFixed(6);
+        }, function(error) {
+            alert('Unable to get location: ' + error.message);
+        });
+    } else {
+        alert('Geolocation is not supported by this browser.');
+    }
+});
+
+// Clear location
+document.getElementById('clearLocation').addEventListener('click', function() {
+    document.getElementById('latitude').value = '';
+    document.getElementById('longitude').value = '';
+});
+
+// Form validation and submission
+document.getElementById('alertForm').addEventListener('submit', function(e) {
+    const sendBtn = document.getElementById('sendBtn');
+    sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+    sendBtn.disabled = true;
+});
+</script>
+{% endblock %}

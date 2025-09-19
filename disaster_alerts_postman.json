@@ -1,0 +1,91 @@
+{
+  "info": {
+    "name": "Disaster Alert System API",
+    "description": "API collection for testing disaster alert system endpoints",
+    "version": "1.0.0"
+  },
+  "item": [
+    {
+      "name": "Send Alert (JSON)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"disaster_type\": \"flood\",\n  \"message\": \"Flash flood warning in downtown area. Move to higher ground immediately. Avoid driving through flooded roads.\",\n  \"latitude\": 40.7128,\n  \"longitude\": -74.0060\n}"
+        },
+        "url": {
+          "raw": "http://localhost:5000/send_alert",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["send_alert"]
+        }
+      }
+    },
+    {
+      "name": "Send Alert - Fire Emergency",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"disaster_type\": \"fire\",\n  \"message\": \"Wildfire approaching residential area. Evacuate immediately via Route 101 North. Assembly point at Central High School.\",\n  \"latitude\": 37.7749,\n  \"longitude\": -122.4194\n}"
+        },
+        "url": {
+          "raw": "http://localhost:5000/send_alert",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["send_alert"]
+        }
+      }
+    },
+    {
+      "name": "Register FCM Token",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"token\": \"sample-fcm-token-here\",\n  \"device_info\": \"Android 12, Chrome Browser\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:5000/api/register_token",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "register_token"]
+        }
+      }
+    },
+    {
+      "name": "Get Alerts History",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "http://localhost:5000/alerts_history",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["alerts_history"]
+        }
+      }
+    }
+  ]
+}

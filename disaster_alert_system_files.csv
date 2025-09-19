@@ -1,0 +1,14 @@
+Filename,Description,Type,Purpose
+app.py,Main Flask application with API endpoints,Python,Backend server with Firebase integration
+requirements.txt,Python dependencies,Config,Package management
+.env.template,Environment variables template,Config,Configuration template
+setup.sh,Setup script for easy installation,Shell,Automated setup
+README.md,Complete project documentation,Documentation,Project guide
+FIREBASE_SETUP.md,Firebase configuration guide,Documentation,Firebase setup instructions
+disaster_alerts_postman.json,Postman collection for API testing,Config,API testing
+firebase-messaging-sw.js,Service worker for background notifications,JavaScript,Push notification handling
+test_api.py,Python script for API testing,Python,Automated testing
+templates/base.html,Base HTML template with Bootstrap,HTML,UI framework
+templates/dashboard.html,Admin dashboard interface,HTML,Main admin interface
+templates/alerts_history.html,Alerts history page,HTML,Alert management
+static/js/client-firebase.js,Client-side Firebase integration,JavaScript,Client-side notifications

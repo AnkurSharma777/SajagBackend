@@ -1,0 +1,5 @@
+Method,Endpoint,Description,Request Body,Response
+GET,/,Admin dashboard main page,None,HTML page
+POST,/send_alert,Send disaster alert,"JSON: {disaster_type, message, latitude, longitude}","JSON: {success, alert_id}"
+GET,/alerts_history,View sent alerts history,None,HTML page with alerts list
+POST,/api/register_token,Register FCM token,"JSON: {token, device_info}","JSON: {success, message}"
