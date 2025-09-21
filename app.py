@@ -10,6 +10,7 @@ app = Flask(__name__)
 # Use environment variable for secret key in production
 app.secret_key = os.environ.get('SECRET_KEY', 'your-secret-key-here')
 
+
 # Initialize Firebase Admin SDK
 def init_firebase():
     try:
@@ -30,6 +31,7 @@ def init_firebase():
     except Exception as e:
         print(f"Firebase initialization failed: {e}")
         return False
+
 
 # Initialize database
 def init_db():
@@ -62,14 +64,17 @@ def init_db():
     conn.close()
     print("Database initialized successfully")
 
+
 # Initialize Firebase and Database on startup
 firebase_initialized = init_firebase()
 init_db()
+
 
 @app.route('/')
 def dashboard():
     """Admin Dashboard - Main page"""
     return render_template('dashboard.html')
+
 
 @app.route('/send_alert', methods=['POST'])
 def send_alert():
@@ -193,6 +198,7 @@ def send_alert():
             flash(f'Error sending alert: {str(e)}', 'error')
             return redirect(url_for('dashboard'))
 
+
 @app.route('/alerts_history')
 def alerts_history():
     """View sent alerts history"""
@@ -208,6 +214,7 @@ def alerts_history():
     conn.close()
 
     return render_template('alerts_history.html', alerts=alerts)
+
 
 @app.route('/api/register_token', methods=['POST'])
 def register_token():
@@ -234,6 +241,7 @@ def register_token():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+
 # ADDED FOR RAILWAY: Health check endpoint
 @app.route('/health')
 def health_check():
@@ -243,6 +251,7 @@ def health_check():
         'timestamp': datetime.now().isoformat(),
         'firebase_initialized': firebase_initialized
     })
+
 
 if __name__ == '__main__':
     # FOR RAILWAY: Use PORT environment variable
