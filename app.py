@@ -209,40 +209,6 @@ def alerts_history():
 
     return render_template('alerts_history.html', alerts=alerts)
 
-@app.route('/clear_history')
-def clear_history():
-    """Clear all alert history - Direct clear when visiting URL"""
-    try:
-        conn = sqlite3.connect('disaster_alerts.db')
-        cursor = conn.cursor()
-        
-        # Get count before clearing
-        cursor.execute('SELECT COUNT(*) FROM alerts')
-        count = cursor.fetchone()[0]
-        
-        # Clear all alerts
-        cursor.execute('DELETE FROM alerts')
-        
-        # Reset auto-increment counter
-        cursor.execute('DELETE FROM sqlite_sequence WHERE name="alerts"')
-        
-        conn.commit()
-        conn.close()
-        
-        return jsonify({
-            'status': 'success',
-            'message': f'Alert history cleared successfully! {count} alerts deleted.',
-            'deleted_count': count,
-            'timestamp': datetime.now().isoformat()
-        })
-        
-    except Exception as e:
-        return jsonify({
-            'status': 'error', 
-            'message': f'Error clearing history: {str(e)}',
-            'timestamp': datetime.now().isoformat()
-        }), 500
-
 @app.route('/api/register_token', methods=['POST'])
 def register_token():
     """Register FCM token for a device"""
