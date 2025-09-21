@@ -7,14 +7,24 @@ import os
 import json
 
 app = Flask(__name__)
-app.secret_key = 'your-secret-key-here'  # Change this in production
+# Use environment variable for secret key in production
+app.secret_key = os.environ.get('SECRET_KEY', 'your-secret-key-here')
+
 
 # Initialize Firebase Admin SDK
-# You'll need to download your service account key and place it in the project directory
 def init_firebase():
     try:
-        # Replace 'path/to/serviceAccountKey.json' with your actual service account key file
-        cred = credentials.Certificate('serviceAccountKey.json')
+        # FOR RAILWAY: Check if Firebase credentials are in environment variable
+        if os.environ.get('FIREBASE_CREDENTIALS'):
+            # Parse Firebase credentials from environment variable
+            firebase_credentials = json.loads(os.environ.get('FIREBASE_CREDENTIALS'))
+            cred = credentials.Certificate(firebase_credentials)
+            print("Using Firebase credentials from environment variable")
+        else:
+            # FOR LOCAL: Use service account key file
+            cred = credentials.Certificate('serviceAccountKey.json')
+            print("Using Firebase credentials from serviceAccountKey.json")
+
         firebase_admin.initialize_app(cred)
         print("Firebase initialized successfully")
         return True
@@ -22,43 +32,49 @@ def init_firebase():
         print(f"Firebase initialization failed: {e}")
         return False
 
+
 # Initialize database
 def init_db():
     conn = sqlite3.connect('disaster_alerts.db')
     cursor = conn.cursor()
     cursor.execute('''
-        CREATE TABLE IF NOT EXISTS alerts (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            disaster_type TEXT NOT NULL,
-            message TEXT NOT NULL,
-            latitude REAL,
-            longitude REAL,
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-            status TEXT DEFAULT 'sent'
-        )
-    ''')
+                   CREATE TABLE IF NOT EXISTS alerts
+                   (
+                       id            INTEGER PRIMARY KEY AUTOINCREMENT,
+                       disaster_type TEXT NOT NULL,
+                       message       TEXT NOT NULL,
+                       latitude      REAL,
+                       longitude     REAL,
+                       timestamp     DATETIME DEFAULT CURRENT_TIMESTAMP,
+                       status        TEXT     DEFAULT 'sent'
+                   )
+                   ''')
 
     cursor.execute('''
-        CREATE TABLE IF NOT EXISTS user_tokens (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            token TEXT UNIQUE NOT NULL,
-            device_info TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
-    ''')
+                   CREATE TABLE IF NOT EXISTS user_tokens
+                   (
+                       id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                       token       TEXT UNIQUE NOT NULL,
+                       device_info TEXT,
+                       created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
+                   )
+                   ''')
 
     conn.commit()
     conn.close()
     print("Database initialized successfully")
 
+
 # Initialize Firebase and Database on startup
 firebase_initialized = init_firebase()
 init_db()
+
 
 @app.route('/')
 def dashboard():
     """Admin Dashboard - Main page"""
     return render_template('dashboard.html')
+
 
 @app.route('/send_alert', methods=['POST'])
 def send_alert():
@@ -100,9 +116,9 @@ def send_alert():
         conn = sqlite3.connect('disaster_alerts.db')
         cursor = conn.cursor()
         cursor.execute('''
-            INSERT INTO alerts (disaster_type, message, latitude, longitude)
-            VALUES (?, ?, ?, ?)
-        ''', (disaster_type, message, latitude, longitude))
+                       INSERT INTO alerts (disaster_type, message, latitude, longitude)
+                       VALUES (?, ?, ?, ?)
+                       ''', (disaster_type, message, latitude, longitude))
         alert_id = cursor.lastrowid
         conn.commit()
         conn.close()
@@ -143,8 +159,10 @@ def send_alert():
                 conn = sqlite3.connect('disaster_alerts.db')
                 cursor = conn.cursor()
                 cursor.execute('''
-                    UPDATE alerts SET status = 'sent_successfully' WHERE id = ?
-                ''', (alert_id,))
+                               UPDATE alerts
+                               SET status = 'sent_successfully'
+                               WHERE id = ?
+                               ''', (alert_id,))
                 conn.commit()
                 conn.close()
 
@@ -154,8 +172,10 @@ def send_alert():
                 conn = sqlite3.connect('disaster_alerts.db')
                 cursor = conn.cursor()
                 cursor.execute('''
-                    UPDATE alerts SET status = 'firebase_error' WHERE id = ?
-                ''', (alert_id,))
+                               UPDATE alerts
+                               SET status = 'firebase_error'
+                               WHERE id = ?
+                               ''', (alert_id,))
                 conn.commit()
                 conn.close()
 
@@ -178,21 +198,23 @@ def send_alert():
             flash(f'Error sending alert: {str(e)}', 'error')
             return redirect(url_for('dashboard'))
 
+
 @app.route('/alerts_history')
 def alerts_history():
     """View sent alerts history"""
     conn = sqlite3.connect('disaster_alerts.db')
     cursor = conn.cursor()
     cursor.execute('''
-        SELECT id, disaster_type, message, latitude, longitude, timestamp, status
-        FROM alerts
-        ORDER BY timestamp DESC
-        LIMIT 50
-    ''')
+                   SELECT id, disaster_type, message, latitude, longitude, timestamp, status
+                   FROM alerts
+                   ORDER BY timestamp DESC
+                   LIMIT 50
+                   ''')
     alerts = cursor.fetchall()
     conn.close()
 
     return render_template('alerts_history.html', alerts=alerts)
+
 
 @app.route('/api/register_token', methods=['POST'])
 def register_token():
@@ -219,5 +241,21 @@ def register_token():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+
+# ADDED FOR RAILWAY: Health check endpoint
+@app.route('/health')
+def health_check():
+    """Health check endpoint for Railway"""
+    return jsonify({
+        'status': 'healthy',
+        'timestamp': datetime.now().isoformat(),
+        'firebase_initialized': firebase_initialized
+    })
+
+
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    # FOR RAILWAY: Use PORT environment variable
+    port = int(os.environ.get('PORT', 5000))
+    # FOR RAILWAY: Bind to 0.0.0.0 and disable debug in production
+    debug_mode = os.environ.get('FLASK_ENV') == 'development'
+    app.run(debug=debug_mode, host='0.0.0.0', port=port)
