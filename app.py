@@ -215,128 +215,28 @@ def alerts_history():
 
     return render_template('alerts_history.html', alerts=alerts)
 
-
-@app.route('/clear_history', methods=['GET', 'POST'])
+@app.route('/clear_history', methods=['POST'])
 def clear_history():
     """Clear all alert history (admin only)"""
-    if request.method == 'POST':
-        try:
-            conn = sqlite3.connect('disaster_alerts.db')
-            cursor = conn.cursor()
-            
-            # Clear all alerts
-            cursor.execute('DELETE FROM alerts')
-            
-            # Reset auto-increment counter
-            cursor.execute('DELETE FROM sqlite_sequence WHERE name="alerts"')
-            
-            conn.commit()
-            conn.close()
-            
-            flash('✅ Alert history cleared successfully!', 'success')
-            return redirect(url_for('alerts_history'))
-            
-        except Exception as e:
-            flash(f'❌ Error clearing history: {str(e)}', 'error')
-            return redirect(url_for('alerts_history'))
-    
-    # GET request - show confirmation page
-    return '''
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>Clear Alert History - Disaster Alert System</title>
-        <style>
-            body { 
-                font-family: Arial, sans-serif; 
-                max-width: 600px; 
-                margin: 50px auto; 
-                padding: 20px; 
-                background-color: #f8f9fa; 
-            }
-            .container { 
-                background: white; 
-                padding: 30px; 
-                border-radius: 10px; 
-                box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
-            }
-            .warning { 
-                background: #fff3cd; 
-                color: #856404; 
-                padding: 20px; 
-                border-radius: 8px; 
-                margin: 20px 0; 
-                border-left: 5px solid #ffc107;
-            }
-            .btn { 
-                padding: 12px 24px; 
-                margin: 10px 5px; 
-                border: none; 
-                border-radius: 5px; 
-                cursor: pointer; 
-                text-decoration: none; 
-                display: inline-block; 
-                font-size: 16px;
-                transition: all 0.3s;
-            }
-            .btn-danger { 
-                background: #dc3545; 
-                color: white; 
-            }
-            .btn-danger:hover { 
-                background: #c82333; 
-                transform: translateY(-2px);
-            }
-            .btn-secondary { 
-                background: #6c757d; 
-                color: white; 
-            }
-            .btn-secondary:hover { 
-                background: #545b62; 
-                transform: translateY(-2px);
-            }
-            h2 { color: #495057; margin-bottom: 20px; }
-            .icon { font-size: 48px; text-align: center; margin: 20px 0; }
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <div class="icon">🗑️</div>
-            <h2 style="text-align: center;">Clear Alert History</h2>
-            
-            <div class="warning">
-                <strong>⚠️ WARNING:</strong> This will permanently delete ALL alert history from the database. 
-                <br><br>
-                <strong>This action cannot be undone!</strong>
-                <br><br>
-                All sent alerts, timestamps, and related data will be lost forever.
-            </div>
-            
-            <p style="font-size: 16px; color: #495057; text-align: center;">
-                Are you absolutely sure you want to clear all alert history?
-            </p>
-            
-            <div style="text-align: center; margin: 30px 0;">
-                <form method="POST" style="display: inline;">
-                    <button type="submit" class="btn btn-danger" 
-                            onclick="return confirm('FINAL CONFIRMATION: Delete ALL alerts permanently?\\n\\nThis cannot be undone!')">
-                        🗑️ Yes, Clear All History
-                    </button>
-                </form>
-                
-                <a href="/alerts_history" class="btn btn-secondary">❌ Cancel</a>
-            </div>
-            
-            <hr style="margin: 30px 0;">
-            <div style="text-align: center;">
-                <a href="/alerts_history" style="color: #007bff; text-decoration: none;">📊 View Alert History</a> | 
-                <a href="/" style="color: #007bff; text-decoration: none;">🏠 Back to Dashboard</a>
-            </div>
-        </div>
-    </body>
-    </html>
-    '''
-
+    try:
+        conn = sqlite3.connect('disaster_alerts.db')
+        cursor = conn.cursor()
+        
+        # Clear all alerts
+        cursor.execute('DELETE FROM alerts')
+        
+        # Reset auto-increment counter
+        cursor.execute('DELETE FROM sqlite_sequence WHERE name="alerts"')
+        
+        conn.commit()
+        conn.close()
+        
+        flash('✅ Alert history cleared successfully!', 'success')
+        return redirect(url_for('alerts_history'))
+        
+    except Exception as e:
+        flash(f'❌ Error clearing history: {str(e)}', 'error')
+        return redirect(url_for('alerts_history'))
 
 @app.route('/clear_tokens', methods=['POST'])
 def clear_tokens():
