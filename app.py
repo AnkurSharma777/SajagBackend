@@ -215,28 +215,29 @@ def alerts_history():
 
     return render_template('alerts_history.html', alerts=alerts)
 
-@app.route('/clear_history', methods=['POST'])
+@app.route('/clear_history', methods=['GET', 'POST'])
 def clear_history():
     """Clear all alert history (admin only)"""
-    try:
-        conn = sqlite3.connect('disaster_alerts.db')
-        cursor = conn.cursor()
-        
-        # Clear all alerts
-        cursor.execute('DELETE FROM alerts')
-        
-        # Reset auto-increment counter
-        cursor.execute('DELETE FROM sqlite_sequence WHERE name="alerts"')
-        
-        conn.commit()
-        conn.close()
-        
-        flash('✅ Alert history cleared successfully!', 'success')
-        return redirect(url_for('alerts_history'))
-        
-    except Exception as e:
-        flash(f'❌ Error clearing history: {str(e)}', 'error')
-        return redirect(url_for('alerts_history'))
+    if request.method == 'POST':
+        try:
+            conn = sqlite3.connect('disaster_alerts.db')
+            cursor = conn.cursor()
+            
+            # Clear all alerts
+            cursor.execute('DELETE FROM alerts')
+            
+            # Reset auto-increment counter
+            cursor.execute('DELETE FROM sqlite_sequence WHERE name="alerts"')
+            
+            conn.commit()
+            conn.close()
+            
+            flash('✅ Alert history cleared successfully!', 'success')
+            return redirect(url_for('alerts_history'))
+            
+        except Exception as e:
+            flash(f'❌ Error clearing history: {str(e)}', 'error')
+            return redirect(url_for('alerts_history'))
 
 @app.route('/clear_tokens', methods=['POST'])
 def clear_tokens():
