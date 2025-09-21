@@ -10,7 +10,6 @@ app = Flask(__name__)
 # Use environment variable for secret key in production
 app.secret_key = os.environ.get('SECRET_KEY', 'your-secret-key-here')
 
-
 # Initialize Firebase Admin SDK
 def init_firebase():
     try:
@@ -31,7 +30,6 @@ def init_firebase():
     except Exception as e:
         print(f"Firebase initialization failed: {e}")
         return False
-
 
 # Initialize database
 def init_db():
@@ -64,17 +62,14 @@ def init_db():
     conn.close()
     print("Database initialized successfully")
 
-
 # Initialize Firebase and Database on startup
 firebase_initialized = init_firebase()
 init_db()
-
 
 @app.route('/')
 def dashboard():
     """Admin Dashboard - Main page"""
     return render_template('dashboard.html')
-
 
 @app.route('/send_alert', methods=['POST'])
 def send_alert():
@@ -198,7 +193,6 @@ def send_alert():
             flash(f'Error sending alert: {str(e)}', 'error')
             return redirect(url_for('dashboard'))
 
-
 @app.route('/alerts_history')
 def alerts_history():
     """View sent alerts history"""
@@ -215,12 +209,16 @@ def alerts_history():
 
     return render_template('alerts_history.html', alerts=alerts)
 
-@app.route('/clear_history', methods=['POST'])
+@app.route('/clear_history')
 def clear_history():
-    """Clear all alert history (admin only)"""
+    """Clear all alert history - Direct clear when visiting URL"""
     try:
         conn = sqlite3.connect('disaster_alerts.db')
         cursor = conn.cursor()
+        
+        # Get count before clearing
+        cursor.execute('SELECT COUNT(*) FROM alerts')
+        count = cursor.fetchone()[0]
         
         # Clear all alerts
         cursor.execute('DELETE FROM alerts')
@@ -231,36 +229,19 @@ def clear_history():
         conn.commit()
         conn.close()
         
-        flash('✅ Alert history cleared successfully!', 'success')
-        return redirect(url_for('alerts_history'))
+        return jsonify({
+            'status': 'success',
+            'message': f'Alert history cleared successfully! {count} alerts deleted.',
+            'deleted_count': count,
+            'timestamp': datetime.now().isoformat()
+        })
         
     except Exception as e:
-        flash(f'❌ Error clearing history: {str(e)}', 'error')
-        return redirect(url_for('alerts_history'))
-
-@app.route('/clear_tokens', methods=['POST'])
-def clear_tokens():
-    """Clear all device tokens (admin only)"""
-    try:
-        conn = sqlite3.connect('disaster_alerts.db')
-        cursor = conn.cursor()
-        
-        # Clear all tokens
-        cursor.execute('DELETE FROM user_tokens')
-        
-        # Reset auto-increment counter
-        cursor.execute('DELETE FROM sqlite_sequence WHERE name="user_tokens"')
-        
-        conn.commit()
-        conn.close()
-        
-        flash('✅ Device tokens cleared successfully!', 'success')
-        return redirect(url_for('dashboard'))
-        
-    except Exception as e:
-        flash(f'❌ Error clearing tokens: {str(e)}', 'error')
-        return redirect(url_for('dashboard'))
-
+        return jsonify({
+            'status': 'error', 
+            'message': f'Error clearing history: {str(e)}',
+            'timestamp': datetime.now().isoformat()
+        }), 500
 
 @app.route('/api/register_token', methods=['POST'])
 def register_token():
@@ -287,7 +268,6 @@ def register_token():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-
 # ADDED FOR RAILWAY: Health check endpoint
 @app.route('/health')
 def health_check():
@@ -297,7 +277,6 @@ def health_check():
         'timestamp': datetime.now().isoformat(),
         'firebase_initialized': firebase_initialized
     })
-
 
 if __name__ == '__main__':
     # FOR RAILWAY: Use PORT environment variable
