@@ -398,3 +398,4 @@ if __name__ == '__main__':
     # FOR RAILWAY: Bind to 0.0.0.0 and disable debug in production
     debug_mode = os.environ.get('FLASK_ENV') == 'development'
     app.run(debug=debug_mode, host='0.0.0.0', port=port)
+    
