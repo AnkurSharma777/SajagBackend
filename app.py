@@ -253,6 +253,145 @@ def health_check():
     })
 
 
+@app.route('/api/emergency_assistance', methods=['POST'])
+def emergency_assistance():
+    """Handle user emergency assistance requests with location"""
+    try:
+        data = request.get_json()
+        user_token = data.get('token', 'anonymous')
+        user_name = data.get('user_name', 'Unknown User')
+        latitude = data.get('latitude')
+        longitude = data.get('longitude')
+        message = data.get('message', 'Emergency assistance needed')
+        device_info = data.get('device_info', '')
+
+        # Validate required fields
+        if not latitude or not longitude:
+            return jsonify({'error': 'Location coordinates are required'}), 400
+
+        # Convert coordinates to float
+        try:
+            latitude = float(latitude)
+            longitude = float(longitude)
+        except ValueError:
+            return jsonify({'error': 'Invalid coordinates format'}), 400
+
+        # Store assistance request in database
+        conn = sqlite3.connect('disaster_alerts.db')
+        cursor = conn.cursor()
+
+        # Create assistance_requests table if it doesn't exist
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS assistance_requests
+            (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_token TEXT,
+                user_name TEXT,
+                latitude REAL NOT NULL,
+                longitude REAL NOT NULL,
+                message TEXT,
+                device_info TEXT,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                status TEXT DEFAULT 'pending',
+                priority TEXT DEFAULT 'high'
+            )
+        ''')
+
+        # Insert assistance request
+        cursor.execute('''
+            INSERT INTO assistance_requests
+            (user_token, user_name, latitude, longitude, message, device_info)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (user_token, user_name, latitude, longitude, message, device_info))
+
+        request_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+
+        print(f'Emergency assistance request received: ID {request_id}, Location: {latitude}, {longitude}')
+
+        return jsonify({
+            'success': True,
+            'message': 'Emergency assistance request received',
+            'request_id': request_id,
+            'timestamp': datetime.now().isoformat()
+        })
+
+    except Exception as e:
+        print(f'Error handling assistance request: {e}')
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/assistance_requests')
+def view_assistance_requests():
+    """Admin view for assistance requests"""
+    conn = sqlite3.connect('disaster_alerts.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT id, user_name, latitude, longitude, message, device_info, timestamp, status
+        FROM assistance_requests
+        ORDER BY timestamp DESC
+        LIMIT 100
+    ''')
+    requests = cursor.fetchall()
+    conn.close()
+
+    return f'''
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Emergency Assistance Requests</title>
+        <style>
+            body {{ font-family: Arial, sans-serif; margin: 20px; }}
+            .header {{ background: #dc3545; color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; }}
+            .request-card {{
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                padding: 15px;
+                margin: 10px 0;
+                background: #f8f9fa;
+            }}
+            .urgent {{ border-left: 5px solid #dc3545; }}
+            .map-link {{
+                background: #007bff;
+                color: white;
+                padding: 5px 10px;
+                text-decoration: none;
+                border-radius: 4px;
+                margin: 5px;
+            }}
+            .status-pending {{ color: #dc3545; font-weight: bold; }}
+            .timestamp {{ color: #6c757d; font-size: 0.9em; }}
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h1>🚨 Emergency Assistance Requests</h1>
+            <p>Real-time rescue requests from users</p>
+        </div>
+
+        {"".join([f'''
+        <div class="request-card urgent">
+            <h3>📍 Request #{req[0]} - {req[1]}</h3>
+            <p><strong>Message:</strong> {req[4]}</p>
+            <p><strong>Location:</strong> {req[2]}, {req[3]}</p>
+            <p><strong>Device:</strong> {req[5]}</p>
+            <p class="timestamp"><strong>Time:</strong> {req[6]}</p>
+            <p class="status-pending">Status: {req[7].upper()}</p>
+            <div>
+                <a href="https://www.google.com/maps?q={req[2]},{req[3]}" target="_blank" class="map-link">🗺️ View on Google Maps</a>
+                <a href="https://www.google.com/maps/dir/{req[2]},{req[3]}" target="_blank" class="map-link">🚗 Get Directions</a>
+            </div>
+        </div>
+        ''' for req in requests]) if requests else '<p>No assistance requests yet.</p>'}
+
+        <hr>
+        <p><a href="/">← Back to Dashboard</a> | <a href="/alerts_history">📊 Alert History</a></p>
+    </body>
+    </html>
+    '''
+
+
 if __name__ == '__main__':
     # FOR RAILWAY: Use PORT environment variable
     port = int(os.environ.get('PORT', 5000))
