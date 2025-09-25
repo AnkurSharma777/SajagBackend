@@ -1,3 +1,9 @@
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+disaster_alerts.db
+
 # Virtual environments
 .venv/
 venv/
@@ -9,10 +15,6 @@ __pycache__/
 *.pyc
 *.pyo
 
-# Database files
-*.db
-*.sqlite3
-
 # IDE files
 .vscode/
 .idea/
@@ -21,5 +23,5 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
-# Firebase credentials (SECURITY)
+# Firebase credentials
 serviceAccountKey.json
